@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Sylvan Plant Spotter </title>
+
+{% endblock %}
+{% block body %}   
+<br>
+<br>
+<br>
+<h1> Welcome to Sylvan </h1>
+<br> 
+
+
+{% if user %}
+<h3> You are currently logged in as : {{user.name}}</h3>
+{% else %}
+<h3> You are currently not logged in. Please log in with Google for the best experience!</h3>
+{% endif %}
+
+{% endblock %}
