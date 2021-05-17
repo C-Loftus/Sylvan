@@ -1,11 +1,12 @@
-from flask import Flask, render_template, url_for, request, redirect, session
+from logging import NullHandler
+from flask import Flask, jsonify, render_template, url_for, request, redirect, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from authlib.integrations.flask_client import OAuth
 
 import os, json
 
-
+# App Initialization
 app = Flask(__name__)
 oauth = OAuth(app)
 app.secret_key = 'random secret'
@@ -36,7 +37,6 @@ def authorize():
     resp = google.get('userinfo', token=token)
     user_info = resp.json()
     session['email'] = user_info
-    # do something with the token and profile
     return redirect('/')
 
 @app.route('/logout')
@@ -45,21 +45,19 @@ def logout():
         session.pop(key)
     return redirect('/')
 
-
-
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///posts.db'
 db = SQLAlchemy(app)
 
 # DB and DB updating code
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    imageLink = db.Column(db.String(50), nullable=False)
-    plantName = db.Column(db.String(30), nullable=False)
-    title = db.Column(db.String(100), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    author = db.Column(db.String(30), nullable=False, default='Anonymous')
+    imageLink = db.Column(db.String(50), nullable=True, default="No Provided Image")
+    plantName = db.Column(db.String(30), nullable=True, default="Unknown Plant")
+    title = db.Column(db.String(100), nullable=True, default=("Post number" + id))
+    description = db.Column(db.Text, nullable=True, default="No Description Provided")
+    author = db.Column(db.String(30), nullable=True, default='Anonymous')
     location = db.Column(db.String(30), nullable=True, default='Location not Specified')
-    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    date_posted = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
 
     def __repr__(self):
         return 'Post ' + str(self.id)
@@ -79,7 +77,12 @@ def newPost():
         post_title =      request.form.get('title', False)
         post_content =    request.form.get('description', False)
         post_location =   request.form.get('location', False)
-        new_post = Post(title=post_title, description=post_content, location=post_location, plantName=plant_Name, imageLink=image_link, author=email["name"])
+        if email is str:
+            post_author = email
+        else:
+            post_author = "Anonymous"
+
+        new_post = Post(title=post_title, description=post_content, location=post_location, plantName=plant_Name, imageLink=image_link, author=post_author)
         db.session.add(new_post)
         db.session.commit()
         return redirect('/allposts')
@@ -117,6 +120,19 @@ def edit(id):
         return redirect('/allposts')
     else:
         return render_template('edit.html', post=post)
+
+app.config["IMAGE_UPLOADS"] = "~/Projects/PlantApp"
+@app.route("/newpost", methods=["GET", "POST"])
+def upload_image():
+    if request.method == "POST":
+        if request.files:
+            image = request.files["image"]
+            print(image)
+            image.save(os.path.join(app.config["IMAGE_UPLOADS"], image.filename))
+            print("Image saved")
+            return redirect(request.url)
+    return render_template("index.html")
+
 
 # Run in debug mode if not deployed
 if __name__ == "__main__":

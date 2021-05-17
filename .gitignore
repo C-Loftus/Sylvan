@@ -1,3 +1,6 @@
 SECRET
 CLIENT_ID
 __pycache__/
+env
+.vscode
+credentials

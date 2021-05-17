@@ -4,9 +4,6 @@
 <title> Create a New Post </title>
 {% endblock %}
 
-
-
-
 {% block body %}   
   <h1> Create a new post </h1>
     <hr>
@@ -14,8 +11,6 @@
     <form action='/newpost' method='POST'>
         Title: <input type='text' name='title' id='title'>
         <br>
-        <!-- Author: <input type='text' name='author' id='author'>
-        <br> -->
         Plant Name: <input type='text' name='plantName' id='plantName'>
         <br>
         Location: <input type='text' name='location' id='location'>
@@ -24,23 +19,17 @@
         <br>
         Image Link: <input type='text' name='imageLink' id='imageLink'>
         <br>
+        <div class="form-group">
+            <label>Select image</label>
+            <div class="custom-file">
+              <input type="file" class="custom-file-input" name="image" id="image">
+              <label class="custom-file-label" for="image">Select image...</label>
+            </div>
+          </div>
+          <br>
         <input type='submit' value='Post'>
     </form>
     <hr>
-
-    <!-- {% for post in posts %} 
-
-            <h2>{{ post.title }}</h2>
-        {% if post.author %}
-            <h3> By : {{post.author }}</h3>
-        {% else %}
-                <h3> No author</h3>
-        {% endif %}
-            <p>{{post.content}}</p>
-            <a href='/posts/delete/{{post.id}}'> Delete </a>
-            <a href='/posts/edit/{{post.id}}'> Edit </a>
-            <hr>
-
-    {% endfor %} -->
-
+    <h1>Upload an image</h1>
+    <hr>
 {% endblock %}
