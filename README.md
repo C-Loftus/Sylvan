@@ -4,6 +4,8 @@ SQLite as the database to handle user-input.
 
 Sylvan does not interact with user passwords in any way and instead uses Google's login APIs and an OAuth client to handle user authentication. 
 
+![image](https://user-images.githubusercontent.com/70598503/118736270-284c2b00-b810-11eb-9cfc-dc578af32d1e.png)
+
 ## Features
 Sylvan supports
 * Various ways to view posts
