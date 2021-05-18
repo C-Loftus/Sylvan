@@ -1,12 +1,11 @@
-from logging import NullHandler
-from flask import Flask, jsonify, render_template, url_for, request, redirect, session
+from flask import Flask, flash, render_template, url_for, request, redirect, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
-import os, json
+import os
 
-# App Initialization
+# App Initialization and Config
 app = Flask(__name__)
 app.config["IMAGE_UPLOADS"] = "/home/colton/Projects/PlantApp/static/Images"
 app.config["ALLOWED_IMAGE_EXTENSIONS"] = ["JPEG", "JPG", "PNG", "GIF"]
@@ -14,7 +13,7 @@ app.config["MAX_IMAGE_FILESIZE"] = 0.5 * 1024 * 1024
 oauth = OAuth(app)
 app.secret_key = 'random secret'
 
-# Authentication Code
+# Authentication Object for OAuth
 google = oauth.register(
     name='google',
     client_id=os.read(os.open("CLIENT_ID", os.O_RDONLY), 100),
@@ -75,21 +74,14 @@ def index():
 def newPost():
     if request.method == 'POST':
         email = dict(session).get('email', None)
-        # image = request.files("image")
-        # if image.filename == "":
-        #     print("No filename")
-        #     return redirect(request.url)
-        # if allowed_image(image.filename):
-        #     filename = secure_filename(image.filename)
-        #     image.save(os.path.join(app.config["IMAGE_UPLOADS"], filename))    
-        #     image_link = filename
         image_link = ""
         if request.files:
             print("Is a file")
-            # if not allowed_image_filesize(request.cookies["filesize"]):
-            #     print("Filesize exceeded maximum limit")
-            #     return redirect(request.url)
             image = request.files["image"]
+            if "filesize" in request.cookies:
+                if not allowed_image_filesize(request.cookies["filesize"]):
+                    print("Filesize exceeded maximum limit")
+                    return redirect(request.url)
             if image.filename == "":
                 print("No filename")
             if allowed_image(image.filename):
@@ -132,19 +124,30 @@ def hello(name):
 @app.route('/allposts/delete/<int:id>')
 def delete(id):
     post = Post.query.get_or_404(id)
-    db.session.delete(post)
-    db.session.commit()
-    return redirect('/allposts')
+    credentials = dict(session).get('email', None)
+    if (credentials is not None and credentials is str):
+        if (id.author == credentials):
+            db.session.delete(post)
+            db.session.commit()
+            return redirect('/allposts')
+    flash("You do not have permission to do that. Try logging in")
+    return redirect("/error")
 
 @app.route('/allposts/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
     post = Post.query.get_or_404(id)
     if request.method == 'POST':
-        post.title = request.form.get('title')
-        post.description = request.form.get('description')
-        post.author = request.form.get('author')
-        db.session.commit()
-        return redirect('/allposts')
+        credentials = dict(session).get('email', None)
+        if (credentials is not None and credentials is str):
+            if (id.author == credentials):
+                post.title = request.form.get('title')
+                post.description = request.form.get('description')
+                post.author = request.form.get('author')
+                db.session.commit()
+                return redirect('/allposts')
+        else:
+            flash("You do not have permission to do that. Try logging in")
+            return redirect('/error')
     else:
         return render_template('edit.html', post=post)
 
@@ -160,12 +163,16 @@ def allowed_image(filename):
     else:
         return False
 
-# def allowed_image_filesize(filesize):
+def allowed_image_filesize(filesize):
     
-#     if int(filesize) <= app.config["MAX_IMAGE_FILESIZE"]:
-#         return True
-#     else:
-#         return False
+    if int(filesize) <= app.config["MAX_IMAGE_FILESIZE"]:
+        return True
+    else:
+        return False
+
+@app.route('/error')
+def handleError():
+    return render_template("error.html")
 
 # Run in debug mode if not deployed
 if __name__ == "__main__":

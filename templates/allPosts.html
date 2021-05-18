@@ -3,7 +3,7 @@
 {% block head %}
 <title>Posts </title>
 <style>
-h3,h4,h5{
+h3,h4,h5, .actions{
     display: inline;
     padding-right: 30px;
     }
@@ -23,7 +23,7 @@ h3,h4,h5{
         {% endif %}
 
         {% if post.plantName %}
-            <h5> {{post.plantName }}</h5>
+            <h5> Species : {{post.plantName }}</h5>
         {% else %}
             <h5> Unspecified Species </h5>
         {% endif %}
@@ -34,7 +34,7 @@ h3,h4,h5{
             <h5> Anonymous </h5>
         {% endif %}
         {% if post.location %}
-            <h5> {{post.location}}</h5>
+            <h5> Found near {{post.location}}</h5>
         {% else %}
             <h5> Location not specified </h5>
         {% endif %}
@@ -45,7 +45,7 @@ h3,h4,h5{
             <img src=static/Images/{{post.imageLink}} class="float-right" style="max-width:300px; max-height:300px" alt="Picture of post {{post.id}}">
         </div>
         {% else %}
-            <h3> No image attatched. </h3>
+            <h5> No image attatched. </h5>
         {% endif %}
         {% if post.description %}
         <br>
@@ -54,10 +54,12 @@ h3,h4,h5{
         <br>
         {% endif %}
         <br>
+        <div class="actions">
+            <a href="/allposts/edit/{{post.id}}" class="btn btn-warning" role="button">Edit</a>
+            <a href="/allposts/delete/{{post.id}}" class="btn btn-danger" role="button">Delete</a>
+            <button class="btn btn-block btn-primary"><i class="fa fa-thumbs-up">Like</i> </button>
+        </div>
 
-        <a href='/allposts/delete/{{post.id}}'> Delete </a>
-        <a href='/allposts/edit/{{post.id}}'> Edit </a>
-        <button class="btn btn-block btn-primary"><i class="fa fa-thumbs-up">Like</i> </button>
         <hr>
     {% endfor %}
 
