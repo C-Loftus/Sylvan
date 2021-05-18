@@ -8,28 +8,26 @@
   <h1> Create a new post </h1>
     <hr>
     <h2> Create new post</h2>
-    <form action='/newpost' method='POST'>
-        Title: <input type='text' name='title' id='title'>
+    <form action='/newpost' method='POST', enctype="multipart/form-data">
+        Title: <input class="form-control" type="text" name='title' id='title' placeholder="Enter Title" aria-label="Enter Title">
         <br>
-        Plant Name: <input type='text' name='plantName' id='plantName'>
+        Plant Name : <input class="form-control" type="plantName" name='plantName' id='plantName' placeholder="Enter Plant Name" aria-label="Enter Plant Name">
         <br>
-        Location: <input type='text' name='location' id='location'>
+        Location: <input class="form-control" type="location" name='location' id='location' placeholder="Enter the Location of the Plant" aria-label="Enter the location of the plant">    
         <br>
-        Post: <input type='text' name='description' id='description'>
+        Description: <input class="form-control" type="description" name='description' id='description' placeholder="Enter the Description of the Plant" aria-label="Enter the description of the plant">    
         <br>
-        Image Link: <input type='text' name='imageLink' id='imageLink'>
+        <h2>Upload an image</h2>
         <br>
         <div class="form-group">
             <label>Select image</label>
             <div class="custom-file">
-              <input type="file" class="custom-file-input" name="image" id="image">
+              <input type="file" class="custom-file-input" name="image" id="image" >
               <label class="custom-file-label" for="image">Select image...</label>
             </div>
           </div>
           <br>
         <input type='submit' value='Post'>
     </form>
-    <hr>
-    <h1>Upload an image</h1>
     <hr>
 {% endblock %}

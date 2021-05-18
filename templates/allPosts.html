@@ -2,6 +2,12 @@
 
 {% block head %}
 <title>Posts </title>
+<style>
+h3,h4,h5{
+    display: inline;
+    padding-right: 30px;
+    }
+</style>
 {% endblock %}
 
 {% block body %}   
@@ -10,50 +16,49 @@
 <hr>
     {% for post in posts %} 
 
-        <h2>{{ post.title }}</h2>
-        <h2>{{ post.plantName }}</h2>
-
-
         {% if post.title %}
         <h3> {{post.title }}</h3>
         {% else %}
             <h3> Post Number {{ post.id}} </h3>
         {% endif %}
 
-
         {% if post.plantName %}
-        <h3> {{post.planeName }}</h3>
+            <h5> {{post.plantName }}</h5>
         {% else %}
-            <h3> Unspecified Species </h3>
+            <h5> Unspecified Species </h5>
         {% endif %}
-
 
         {% if post.author %}
-            <h3> By : {{post.author }}</h3>
+            <h5> By : {{post.author }}</h5>
         {% else %}
-            <h3> Anonymous </h3>
+            <h5> Anonymous </h5>
         {% endif %}
         {% if post.location %}
-            <h3> {{post.location}}</h3>
+            <h5> {{post.location}}</h5>
         {% else %}
-            <h3> Location not specified </h3>
+            <h5> Location not specified </h5>
         {% endif %}
         {% if post.imageLink %}
-            <img src="{{post.imageLink}}">
+        <div>
+            <br>
+            <br>
+            <img src=static/Images/{{post.imageLink}} class="float-right" style="max-width:300px; max-height:300px" alt="Picture of post {{post.id}}">
+        </div>
         {% else %}
             <h3> No image attatched. </h3>
         {% endif %}
-
-        <p>{{post.description}}</p>
-
-
-
+        {% if post.description %}
+        <br>
+        <br>       
+        <h3>{{post.description}}</h3>
+        <br>
+        {% endif %}
+        <br>
 
         <a href='/allposts/delete/{{post.id}}'> Delete </a>
         <a href='/allposts/edit/{{post.id}}'> Edit </a>
         <button class="btn btn-block btn-primary"><i class="fa fa-thumbs-up">Like</i> </button>
         <hr>
-
     {% endfor %}
 
 {% endblock %}
