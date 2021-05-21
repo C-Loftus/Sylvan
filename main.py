@@ -4,20 +4,25 @@ from datetime import datetime
 from authlib.integrations.flask_client import OAuth
 from werkzeug.utils import secure_filename
 import os
+from dotenv import load_dotenv
 
 # App Initialization and Config
+load_dotenv()
 app = Flask(__name__)
 app.config["IMAGE_UPLOADS"] = "/home/colton/Projects/PlantApp/static/Images"
 app.config["ALLOWED_IMAGE_EXTENSIONS"] = ["JPEG", "JPG", "PNG", "GIF"]
 app.config["MAX_IMAGE_FILESIZE"] = 0.5 * 1024 * 1024
 oauth = OAuth(app)
-app.secret_key = 'random secret'
+app.secret_key = os.environ["SECRET_USER_PROVIDED_KEY"]
 
 # Authentication Object for OAuth
 google = oauth.register(
     name='google',
-    client_id=os.read(os.open("CLIENT_ID", os.O_RDONLY), 100),
-    client_secret=os.read(os.open("SECRET", os.O_RDONLY), 100),
+    # this is commented out just in case the user wants to use a file instead of environment var
+    # client_id=os.read(os.open("CLIENT_ID", os.O_RDONLY), 100),
+    # client_secret=os.read(os.open("SECRET", os.O_RDONLY), 100),
+    client_id=os.environ["CLIENT_ID"],
+    client_secret=os.environ["SECRET"],
     access_token_url='https://accounts.google.com/o/oauth2/token',
     access_token_params=None,
     authorize_url='https://accounts.google.com/o/oauth2/auth',
@@ -96,11 +101,11 @@ def newPost():
         post_content =    request.form.get('description', False)
         post_location =   request.form.get('location', False)
 
-        if email is str:
-            post_author = email
+        # if there are login credentials, use that instead of anonymous
+        if "name" in email:
+            post_author = email["name"]
         else:
             post_author = "Anonymous"
-
         new_post = Post(title=post_title, description=post_content, location=post_location, plantName=plant_Name, imageLink=image_link, author=post_author)
         db.session.add(new_post)
         db.session.commit()
@@ -115,18 +120,12 @@ def allPosts():
     all_posts = Post.query.order_by(Post.date_posted).all()
     return render_template('allPosts.html', posts=all_posts)
 
-
-@app.route('/home/<string:name>')
-def hello(name):
-    return "Hello, " + name
-
-
 @app.route('/allposts/delete/<int:id>')
 def delete(id):
     post = Post.query.get_or_404(id)
     credentials = dict(session).get('email', None)
-    if (credentials is not None and credentials is str):
-        if (id.author == credentials):
+    if (credentials is not None):
+        if (post.author == credentials["name"]):
             db.session.delete(post)
             db.session.commit()
             return redirect('/allposts')
@@ -136,18 +135,25 @@ def delete(id):
 @app.route('/allposts/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
     post = Post.query.get_or_404(id)
-    if request.method == 'POST':
-        credentials = dict(session).get('email', None)
-        if (credentials is not None and credentials is str):
-            if (id.author == credentials):
+    credentials = dict(session).get('email', None)
+    if (credentials is not None):
+        if (post.author == credentials["name"]):
+            if request.method == 'POST':
                 post.title = request.form.get('title')
                 post.description = request.form.get('description')
-                post.author = request.form.get('author')
+                post.plantName = request.form.get('plantName')
+                post.location = request.form.get('location')
                 db.session.commit()
                 return redirect('/allposts')
+                # load the edit page if have the write credentials but 
+                # it is a get response instead of post
+            else:
+                return render_template('edit.html', post=post)
+        # don't allow editing if the name does not match the author
         else:
             flash("You do not have permission to do that. Try logging in")
             return redirect('/error')
+    # load the edit page but don't necessarily allow editing until the check
     else:
         return render_template('edit.html', post=post)
 
@@ -164,7 +170,6 @@ def allowed_image(filename):
         return False
 
 def allowed_image_filesize(filesize):
-    
     if int(filesize) <= app.config["MAX_IMAGE_FILESIZE"]:
         return True
     else:
@@ -177,3 +182,27 @@ def handleError():
 # Run in debug mode if not deployed
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+
+
+@app.route('/allposts/search/<string:userInput>', methods=['GET'])
+def search(userInput):
+    # first tries to search by user id since that is the least
+    # expensive operation. If a client just inputs a number. The func knows 
+    # for sure that it is just a post Id since that is the only var where
+    # numbers are visible to the client in this site
+    try:
+        postId = int(userInput)
+    except ValueError:
+        print("Not a number. Going to the next search option")
+    else: 
+        if ((outPost := db.Query.get(postId)) != None):
+            return render_template("search.html", posts=outPost)
+        else:
+            pass
+
+    # next tries to search by plant species since that is most common
+    
+
+    
