@@ -1,7 +1,8 @@
 SECRET
 CLIENT_ID
 __pycache__/
-env
+.env
+env/
 .vscode
 credentials
-static/Images*
+static/Images/*
