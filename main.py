@@ -2,9 +2,16 @@ from flask import Flask, flash, render_template, url_for, request, redirect, ses
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from authlib.integrations.flask_client import OAuth
+from sqlalchemy.orm.session import Session
+from sqlalchemy.sql.elements import outparam
+from sqlalchemy.sql.schema import Column
 from werkzeug.utils import secure_filename
 import os
 from dotenv import load_dotenv
+# from .database import session
+# from .models import Customer
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 # App Initialization and Config
 load_dotenv()
@@ -157,6 +164,86 @@ def edit(id):
     else:
         return render_template('edit.html', post=post)
 
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    '''
+    This search algorithm supports arbitrary search queries. The user
+    input will search id's, author names, plant species, locations,
+    and descriptions from the database. 
+    '''
+
+    if request.method == 'POST':
+        userInput = request.form.get('userInput', False)
+
+        '''
+        first tries to search by user id since that is the least
+        expensive operation. If a client just inputs a number. The func knows 
+        for sure that it is just a post Id since that is the only var where
+        numbers are visible to the client in this site
+        '''
+        try:
+            postId = int(userInput)
+        except ValueError:
+            print("Not a number. Going to the next search option")
+        else: 
+            outPost = Post.query.order_by(Post.id).filter(Post.id == userInput).all()
+            if (outPost != None):
+                return render_template("searchResults.html", posts=outPost)
+            else:
+                pass
+
+        '''
+        Now that you know it isn't an id that was input, you search through all columns and return
+        the most relevant data. We use the length since a higher length means more relevant posts
+        matched the filer criteria.
+        '''
+        maxLen = 0
+        bestPost = None
+        validResults = False
+        
+
+        # for attribute in dir(Post):
+        #     # only want to iterate through attribute we explicitly declared since only those are 
+        #     # the attributes that have database columns associated with them
+        #     if not attribute.startswith('__'):
+        #         currentAttribute = getattr(Post, attribute)
+        #         outPost = Post.query.order_by(currentAttribute).filter(currentAttribute == userInput).all()
+        #         length = len(outPost)
+        #         if length > maxLen:
+        #             maxLen = length
+        #             bestPost = outPost
+        '''
+        TODO: Fix bug with loop code above to make it more terse than the code below
+        '''
+
+        authorPost = Post.query.order_by(Post.author).filter(Post.author == userInput).all()
+        if len(authorPost) > maxLen:
+            bestPost = authorPost
+
+        locationPost = Post.query.order_by(Post.location).filter(Post.location == userInput).all()
+        if len(locationPost) > maxLen:
+            bestPost = locationPost
+
+        descriptionPost = Post.query.order_by(Post.description).filter(Post.description == userInput).all()
+        if len(descriptionPost) > maxLen:
+            bestPost = descriptionPost
+        
+        titlePost = Post.query.order_by(Post.title).filter(Post.title == userInput).all()
+        if len(titlePost) > maxLen:
+            bestPost = titlePost
+
+        speciesPost = Post.query.order_by(Post.plantName).filter(Post.plantName == userInput).all()
+        if len(speciesPost) > maxLen:
+            bestPost = speciesPost
+        
+        if maxLen == 0:
+            validResults = False
+
+        return render_template("searchResults.html", posts=bestPost, result = validResults)
+    return render_template("search.html")
+
+    
+
 def allowed_image(filename):
     # We only want files with a . in the filename
     if not "." in filename:
@@ -184,25 +271,3 @@ if __name__ == "__main__":
     app.run(debug=True)
 
 
-
-
-@app.route('/allposts/search/<string:userInput>', methods=['GET'])
-def search(userInput):
-    # first tries to search by user id since that is the least
-    # expensive operation. If a client just inputs a number. The func knows 
-    # for sure that it is just a post Id since that is the only var where
-    # numbers are visible to the client in this site
-    try:
-        postId = int(userInput)
-    except ValueError:
-        print("Not a number. Going to the next search option")
-    else: 
-        if ((outPost := db.Query.get(postId)) != None):
-            return render_template("search.html", posts=outPost)
-        else:
-            pass
-
-    # next tries to search by plant species since that is most common
-    
-
-    
